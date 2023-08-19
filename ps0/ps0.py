@@ -289,8 +289,10 @@ def compute_death_rate_first_n_days(n, cases_cumulative, deaths_cumulative):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
-
+    cases = cases_cumulative[:, n-1:n]
+    deaths = deaths_cumulative[:, n-1:n]
+    cleaned_rates = np.nan_to_num((deaths / cases), nan=0)
+    return np.mean(cleaned_rates, axis=1)
 
 # Test case for Task 2.1
 def test_21():
@@ -345,7 +347,9 @@ def compute_increase_in_cases(n, cases_cumulative):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
+    increase = np.diff(cases_cumulative)
+    first_days = cases_cumulative[:, 0]
+    return np.insert(increase, 0, first_days, axis=1)[:,:n]
     
 
 # Test case for Task 2.2
@@ -398,7 +402,7 @@ def find_max_increase_in_cases(n_cases_increase):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
+    return np.amax(n_cases_increase, axis=1)
 
 
 # Test case for Task 2.3
