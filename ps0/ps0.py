@@ -459,7 +459,9 @@ def compute_n_masks_purchaseable(healthcare_spending, mask_prices):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
+    masks_each_day = np.floor(healthcare_spending / mask_prices) * 100
+    masks = masks_each_day.sum(axis=1)
+    return masks
 
 # Test case for Task 2.4
 def test_24():
@@ -517,7 +519,10 @@ def compute_stringency_index(stringency_values):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
+    weights = [1, 1, 3, 2]
+    stringency_index = (stringency_values @ weights)
+    print(stringency_index)
+    return stringency_index
 
 # Test case for Task 2.5
 def test_25():
@@ -579,7 +584,19 @@ def average_increase_in_cases(n_cases_increase, n_adj_entries_avg=7):
     '''
     
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
+    window_size = 2 * n_adj_entries_avg + 1
+    windows = np.lib.stride_tricks.sliding_window_view(n_cases_increase, (1, window_size))
+    # Compute the mean over the windows and round down to the smallest integer
+    avg_increase = np.floor(np.mean(windows, axis=-1)).squeeze()
+    print(avg_increase)
+    
+    # Create a result array filled with nan values
+    result = np.full(n_cases_increase.shape, np.nan)
+    
+    # Update the result array with the computed average increase, avoiding the edges
+    result[:, n_adj_entries_avg:-n_adj_entries_avg] = avg_increase
+    return result
+    
 
 # Test case for Task 2.6
 def test_26():
@@ -643,8 +660,33 @@ def is_peak(n_cases_increase_avg, n_adj_entries_peak=7):
     '''
 
     # TODO: add your solution here and remove `raise NotImplementedError`
-    raise NotImplementedError
-
+    window_size = 2 * n_adj_entries_peak + 1
+    # non_nan = np.array([row[~np.isnan(row)] for row in n_cases_increase_avg])
+    non_nan = np.ma.masked_invalid(n_cases_increase_avg)
+    print(non_nan)
+    national_avg = np.nanmean(n_cases_increase_avg, axis=1)
+    print(national_avg)
+    significance_threshold = 0.1 * national_avg
+    windows = np.lib.stride_tricks.sliding_window_view(non_nan, (1, window_size)).squeeze()
+    print(windows)
+    print(windows.shape)
+    center_idx = n_adj_entries_peak
+    def is_center_max(window):
+        center_val = window[center_idx]
+        return np.all(window[:center_idx] < center_val) and np.all(window[center_idx + 1:] <= center_val)
+    is_max_result = np.apply_along_axis(is_center_max, -1, windows).squeeze()
+    print(is_max_result)
+    centers = windows[:, :, center_idx]
+    is_significant = centers > significance_threshold[:, np.newaxis]
+    print(is_significant)
+    result = np.logical_and(is_max_result, is_significant).squeeze()
+    print(result)
+    
+    is_max_result = np.apply_along_axis(is_center_max, -1, windows)
+    padding_amount = (n_cases_increase_avg.shape[1] - result.shape[1]) // 2
+    padded_result = np.pad(result, ((0, 0), (padding_amount, padding_amount)), mode='constant', constant_values=False)
+    print(padded_result)
+    return padded_result
 
 def test_27():
     n_cases_increase_avg = np.array([[np.nan, np.nan, 10, 10, 5, 20, 7, np.nan, np.nan], [np.nan, np.nan, 15, 5, 16, 17, 17, np.nan, np.nan]])
