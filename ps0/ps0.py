@@ -520,6 +520,7 @@ def compute_stringency_index(stringency_values):
     
     # TODO: add your solution here and remove `raise NotImplementedError`
     weights = [1, 1, 3, 2]
+    print(stringency_values)
     stringency_index = (stringency_values @ weights)
     print(stringency_index)
     return stringency_index
@@ -609,84 +610,33 @@ def test_26():
 
 # Task 2.7
 def is_peak(n_cases_increase_avg, n_adj_entries_peak=7):
-    '''
-    Determines whether the (j + 1)th day was a day when the increase in cases
-    peaked in the ith country.
-    Parameters
-    ----------
-    n_cases_increase_avg: np.ndarray
-        2D `ndarray` with each row representing the data of a country, and the columns
-        of each row representing the time series data of the average daily increase in the
-        number of confirmed cases in that country, i.e. the ith row of 
-        `n_cases_increase` contains the data of the ith country, and the (i, j) entry of
-        `n_cases_increase` is the average daily increase in the number of confirmed
-        cases on the (j + 1)th day in the ith country. In this case, the 'average'
-        is computed using the output from `average_increase_in_cases`.
-    n_adj_entries_peak: int
-        Number of days that determines the size of the window in which peaks are
-        to be detected. 
     
-    Returns
-    -------
-    2D `ndarray` with the (i, j) entry indicating whether there is a peak in the
-    daily increase in cases on the (j + 1)th day in the ith country.
-    Suppose `a` is the average daily increase in cases, with the (i, j) entry
-    indicating the average increase in cases on the (j + 1)th day in the ith
-    country. Moreover, let `n_adj_entries_peak` be denoted by `m`.
-    In addition, an increase on the (j + 1)th day is deemed significant in the
-    ith country if `a[i, j]` is greater than 10 percent of the mean of all
-    average daily increases in the country.
-    Now, to determine whether there is a peak on the (j + 1)th day in the ith
-    country, check whether `a[i, j]` is maximum in {`a[i, j - m]`, `a[i, j - m + 1]`,
-    ..., `a[i, j + m - 1]`, `a[i, j + m]`}. If it is and `a[i, j]` is significant,
-    then there is a peak on the (j + 1)th day in the ith country; otherwise,
-    there is no peak.
-    Note
-    ----
-    Let d = `n_adj_entries_avg` + `n_adj_entries_peak`, where `n_adj_entries_avg`
-    is that used to compute `n_cases_increase_avg`. Observe that it is not
-    possible to detect a peak in the first and last d days, i.e. these days should
-    not be peaks.
-    
-    As described in `average_increase_in_cases`, to compute the average daily
-    increase, we need data from the previous and the next `n_adj_entries_avg`
-    number of days. Hence, we won't have an average for these days, precluding
-    the computation of peaks during the first and last `n_adj_entries_avg` days.
-    Moreover, similar to `average_increase_in_cases`, we need the data over the
-    interval [-`n_adj_entries_peak` + j, `n_adj_entries_peak` + j] to determine
-    whether the (j + 1)th day is a peak.
-    Hint: to determine `n_adj_entries_avg` from `n_cases_increase_avg`,
-    `np.count_nonzero` and `np.isnan` may be helpful.
-    '''
-
-    # TODO: add your solution here and remove `raise NotImplementedError`
     window_size = 2 * n_adj_entries_peak + 1
-    # non_nan = np.array([row[~np.isnan(row)] for row in n_cases_increase_avg])
     non_nan = np.ma.masked_invalid(n_cases_increase_avg)
-    print(non_nan)
     national_avg = np.nanmean(n_cases_increase_avg, axis=1)
-    print(national_avg)
     significance_threshold = 0.1 * national_avg
     windows = np.lib.stride_tricks.sliding_window_view(non_nan, (1, window_size)).squeeze()
-    print(windows)
-    print(windows.shape)
     center_idx = n_adj_entries_peak
-    def is_center_max(window):
-        center_val = window[center_idx]
-        return np.all(window[:center_idx] < center_val) and np.all(window[center_idx + 1:] <= center_val)
-    is_max_result = np.apply_along_axis(is_center_max, -1, windows).squeeze()
-    print(is_max_result)
+
+    # Calculate 'is_center_max' without using 'apply_along_axis'
+    left_windows = windows[:, :, :center_idx]
+    right_windows = windows[:, :, center_idx+1:]
+    center_vals = windows[:, :, center_idx][:, :, np.newaxis]
+    is_max_left = np.all(left_windows < center_vals, axis=-1)
+    is_max_right = np.all(right_windows <= center_vals, axis=-1)
+    is_max_result = np.logical_and(is_max_left, is_max_right)
+    
+    # Calculate 'is_significant'
     centers = windows[:, :, center_idx]
     is_significant = centers > significance_threshold[:, np.newaxis]
-    print(is_significant)
-    result = np.logical_and(is_max_result, is_significant).squeeze()
-    print(result)
-    
-    is_max_result = np.apply_along_axis(is_center_max, -1, windows)
+
+    result = np.logical_and(is_max_result, is_significant)
+
     padding_amount = (n_cases_increase_avg.shape[1] - result.shape[1]) // 2
     padded_result = np.pad(result, ((0, 0), (padding_amount, padding_amount)), mode='constant', constant_values=False)
-    print(padded_result)
+    
     return padded_result
+
 
 def test_27():
     n_cases_increase_avg = np.array([[np.nan, np.nan, 10, 10, 5, 20, 7, np.nan, np.nan], [np.nan, np.nan, 15, 5, 16, 17, 17, np.nan, np.nan]])
@@ -695,6 +645,7 @@ def test_27():
     actual = is_peak(n_cases_increase_avg, n_adj_entries_peak=n_adj_entries_peak)
     expected = np.array([[False, False, False, False, False, True, False, False, False],
                         [False, False, False, False, False, True, False, False, False]])
+    print(np.all(actual == expected))
     assert np.all(actual == expected)
 
     n_cases_increase_avg2 = np.array([[np.nan, np.nan, 10, 20, 20, 20, 20, np.nan, np.nan], [np.nan, np.nan, 20, 20, 20, 20, 10, np.nan, np.nan]])
@@ -703,6 +654,7 @@ def test_27():
     actual2 = is_peak(n_cases_increase_avg2, n_adj_entries_peak=n_adj_entries_peak2)
     expected2 = np.array([[False, False, False, True, False, False, False, False, False],
                         [False, False, False, False, False, False, False, False, False]])
+    print(np.all(actual2 == expected2))
     assert np.all(actual2 == expected2)
 
 #test_27()
