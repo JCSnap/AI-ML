@@ -6,6 +6,7 @@ import math
 import random
 import time
 from typing import List, Tuple
+import numpy as np
 
 import cube
 import utils
@@ -21,6 +22,8 @@ from utils import PriorityQueue
 
 #TODO Task 1.1: Implement your heuristic function, which takes in an instance of the Cube and
 #   the State class and returns the estimated cost of reaching the goal state from the state given.
+
+# One possible heuristic: sum of the number of tiles that are not in the correct position
 def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     r"""
     Computes the heuristic value of a state
@@ -34,11 +37,30 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     """
     h_n = 0.0
     goals = problem.goal
+    shape = goals.shape
 
-    """ YOUR CODE HERE """
+    # Convert the flat layouts to 2D numpy arrays
+    goal_array = np.array(goals.layout).reshape(shape)
+    state_array = np.array(state.layout).reshape(shape)
+
+    # We look the the number of rows in the state that are different from the goal, same with columns
+    different_rows = np.sum(np.any(state_array != goal_array, axis=1))
+    different_columns = np.sum(np.any(state_array != goal_array, axis=0))
+
+    # The inspiration behind this heuristic is the example given:
+    #  State  Goal
+    #  RRR    BRR
+    #  GGG    RGG
+    #  BBB    GBB
+    # We cannot use number of tiles not aligned, since that would give us a cost of 3, which is an overestimate of the true
+    # cost of 1 needed to just rotate the left column up
+    # We can then generalize this. For this example, the heuristic cannot be more than 1 for it to be admissible.
+    # By eyepowering, we see that the easiest way is to take the number of columns out of sync
+    # Of course, we can also generalize this to the rows
+    # In this case the are 3 rows out of sync, and since heuristics cannot be more than the true cost,
+    # We take the min of columns and rows out of sync
+    h_n = min(different_rows, different_columns)
     
-    """ END YOUR CODE HERE """
-
     return h_n
 
 # Test
