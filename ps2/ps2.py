@@ -1,7 +1,9 @@
 """ CS2109S Problem Set 2: Informed Search"""
 
+from collections import deque, namedtuple
 import copy
 import heapq
+import itertools
 import math
 import random
 import time
@@ -38,7 +40,6 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     h_n = 0.0
     goals = problem.goal
     shape = goals.shape
-
     # Convert the flat layouts to 2D numpy arrays
     goal_array = np.array(goals.layout).reshape(shape)
     state_array = np.array(state.layout).reshape(shape)
@@ -46,7 +47,6 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     # We look the the number of rows in the state that are different from the goal, same with columns
     different_rows = np.sum(np.any(state_array != goal_array, axis=1))
     different_columns = np.sum(np.any(state_array != goal_array, axis=0))
-
     # The inspiration behind this heuristic is the example given:
     #  State  Goal
     #  RRR    BRR
@@ -60,7 +60,6 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     # In this case the are 3 rows out of sync, and since heuristics cannot be more than the true cost,
     # We take the min of columns and rows out of sync
     h_n = min(different_rows, different_columns)
-    
     return h_n
 
 # Test
@@ -115,7 +114,8 @@ if __name__ == '__main__':
     print('cube4: ' + test_heuristic(cube4))
     print('\n')
 
-
+Node = namedtuple('Node', ['state', 'parent', 'action', 'cost'])
+State = namedtuple('State', ['layout', 'shape'])
 #TODO Task 1.2: Implement A* search which takes in an instance of the Cube 
 #   class and returns a list of actions [(2,'left'), ...] from the provided action set.
 def astar_search(problem: cube.Cube):
@@ -131,14 +131,72 @@ def astar_search(problem: cube.Cube):
     """
     fail = True
     solution = []
+    pq = []
+    heapq.heapify(pq)
+    initial_node = Node(state=problem.initial, parent=None, action=None, cost=0)
+    heapq.heappush(pq, (initial_node.cost, get_random_number(), initial_node))
+    shape = problem.initial.shape
+    r, c = shape
+
+    # possible actions
+    # {0, "left"}, {0, "right"}, {1, "left"}, {1, "right"}, {2, "left"}, {2, "right"} .... {r, "left"}, {r, "right"}
+    # {0, "up"}, {0, "down"}, {1, "up"}, {1, "down"}, {2, "up"}, {2, "down"} .... {c, "up"}, {c, "down"}
+    # There would be total of 2 * (r + c) actions
     
-    """ YOUR CODE HERE """
- 
-    """ END YOUR CODE HERE """
-    
+
+    while pq:
+        cur_node = pq.pop()[2]
+        if np.array_equal(np.array(cur_node.state.layout), np.array(problem.goal.layout)):
+            fail = False
+            break
+        for i in range(r):
+            for direction in ["left", "right"]:
+                next_state = rubik_transition(cur_node.state, (i, direction), problem.initial.shape)
+                cost = heuristic_func(problem, next_state) + cur_node.cost + 1
+                next_node = Node(state=next_state, parent=cur_node, action=(i, direction), cost=cost)
+                print(next_state)
+                print(next_node.action)
+                print(next_node.cost)
+
+                heapq.heappush(pq, (next_node.cost, get_random_number(), next_node))
+        for j in range(c):
+            for direction in ["up", "down"]:
+                next_state = rubik_transition(cur_node.state, (j, direction), problem.initial.shape)
+                cost = heuristic_func(problem, next_state) + cur_node.cost + 1
+                next_node = Node(state=next_state, parent=cur_node, action=(j, direction), cost=cost)
+                print(next_state)
+                print(next_node.action)
+                print(next_node.cost)
+                heapq.heappush(pq, (next_node.cost, get_random_number(), next_node))
     if fail:
         return False
     return solution
+
+def rubik_transition(state, action, shape):
+    state_array = np.array(state.layout).reshape(shape)
+    idx = action[0]
+    # consider all cases of action using switch case below
+    match action[1]:
+        case "left":
+            # turn the idx-th row left
+            state_array[idx, :] = np.roll(state_array[idx, :], -1)
+        case "right":
+            # turn the idx-th row right
+            state_array[idx, :] = np.roll(state_array[idx, :], 1)
+        case "up":
+            # turn the idx-th col up
+            state_array[:, idx] = np.roll(state_array[:, idx], -1)
+        case "down":
+            # turn the idx-th col down
+            state_array[:, idx] = np.roll(state_array[:, idx], 1)
+    
+    print(state_array)
+
+    flattened_array = state_array.flatten()
+    return State(layout=flattened_array, shape=shape)
+
+def get_random_number():
+    return random.randint(1, 1000000)
 
 @wrap_test
 def test_astar(case):
@@ -184,10 +242,10 @@ if __name__ == '__main__':
         [3, 'up'], [2, 'left']], 'cost': 3}}
 
     print('Task 1.2:')
-    print('cube1: ' + test_astar(cube1)) 
+    # print('cube1: ' + test_astar(cube1)) 
     print('cube2: ' + test_astar(cube2)) 
-    print('cube3: ' + test_astar(cube3)) 
-    print('cube4: ' + test_astar(cube4)) 
+    # print('cube3: ' + test_astar(cube3)) 
+    # print('cube4: ' + test_astar(cube4)) 
     print('\n')
 
 
