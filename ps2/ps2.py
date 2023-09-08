@@ -62,6 +62,45 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     h_n = min(different_rows, different_columns)
     return h_n
 
+# For example:
+# Goal:
+# RRR
+# GGG
+# BBB
+# 
+# Current:
+# GRR
+# BGG
+# RBB
+# 
+# sum of distance to nearest correct position (1 + 1 + 1)
+# Explanation: the nearest B in the goal state is at position (0, 0). The misaligned B is at position (1, 0). Distance is 1. Same reasoning for R and G.
+# total misaligned tiles (RBG of left column so total 3)
+# heuristic = 3/3 = 1
+def heuristic_func2(problem: cube.Cube, state: cube.State) -> float:
+    goals = problem.goal
+    shape = goals.shape
+    goal_array = np.array(goals.layout).reshape(shape)
+    state_array = np.array(state.layout).reshape(shape)
+    
+    total_distance = 0
+    misaligned_count = 0
+    
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if state_array[i, j] != goal_array[i, j]:
+                correct_positions = np.argwhere(goal_array == state_array[i, j])
+                distances = [abs(i-x) + abs(j-y) for x, y in correct_positions]
+                min_distance = min(distances)
+                total_distance += min_distance
+                misaligned_count += 1
+
+    if misaligned_count == 0:
+        return 0.0
+
+    h_n = total_distance / misaligned_count
+    return h_n
+
 # Test
 def wrap_test(func):
     def inner(*args, **kwargs):
@@ -132,9 +171,11 @@ def astar_search(problem: cube.Cube):
     fail = True
     solution = []
     pq = []
+    counter = 0
     heapq.heapify(pq)
     initial_node = Node(state=problem.initial, parent=None, action=None, cost=0)
-    heapq.heappush(pq, (initial_node.cost, get_random_number(), initial_node))
+    heapq.heappush(pq, (initial_node.cost, counter, initial_node))
+    counter += 1
     shape = problem.initial.shape
     r, c = shape
 
@@ -145,10 +186,10 @@ def astar_search(problem: cube.Cube):
     
 
     while pq:
-        cur_node = pq.pop()[2]
+        cur_node =  heapq.heappop(pq)[2]
         if np.array_equal(np.array(cur_node.state.layout), np.array(problem.goal.layout)):
             fail = False
-            break
+            return get_solution(cur_node)
         for i in range(r):
             for direction in ["left", "right"]:
                 next_state = rubik_transition(cur_node.state, (i, direction), problem.initial.shape)
@@ -157,17 +198,19 @@ def astar_search(problem: cube.Cube):
                 print(next_state)
                 print(next_node.action)
                 print(next_node.cost)
-
-                heapq.heappush(pq, (next_node.cost, get_random_number(), next_node))
+                heapq.heappush(pq, (next_node.cost, counter, next_node))
+                counter += 1
         for j in range(c):
             for direction in ["up", "down"]:
+                print("passed")
                 next_state = rubik_transition(cur_node.state, (j, direction), problem.initial.shape)
                 cost = heuristic_func(problem, next_state) + cur_node.cost + 1
                 next_node = Node(state=next_state, parent=cur_node, action=(j, direction), cost=cost)
                 print(next_state)
                 print(next_node.action)
                 print(next_node.cost)
-                heapq.heappush(pq, (next_node.cost, get_random_number(), next_node))
+                heapq.heappush(pq, (next_node.cost, counter, next_node))
+                counter += 1
     if fail:
         return False
     return solution
@@ -195,8 +238,14 @@ def rubik_transition(state, action, shape):
     flattened_array = state_array.flatten()
     return State(layout=flattened_array, shape=shape)
 
-def get_random_number():
-    return random.randint(1, 1000000)
+def get_solution(node):
+    solution = []
+    while node.parent:
+        solution.append(node.action)
+        node = node.parent
+    solution.reverse()
+    print(solution)
+    return solution
 
 @wrap_test
 def test_astar(case):
@@ -242,10 +291,10 @@ if __name__ == '__main__':
         [3, 'up'], [2, 'left']], 'cost': 3}}
 
     print('Task 1.2:')
-    # print('cube1: ' + test_astar(cube1)) 
+    print('cube1: ' + test_astar(cube1)) 
     print('cube2: ' + test_astar(cube2)) 
-    # print('cube3: ' + test_astar(cube3)) 
-    # print('cube4: ' + test_astar(cube4)) 
+    print('cube3: ' + test_astar(cube3)) 
+    print('cube4: ' + test_astar(cube4)) 
     print('\n')
 
 
