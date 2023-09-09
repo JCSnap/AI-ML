@@ -290,12 +290,12 @@ if __name__ == '__main__':
         9, 2, 2, 1, 0, 9, 2, 1, 0, 9]}}, 'answer': {'solution': [[1, 'down'],
         [3, 'up'], [2, 'left']], 'cost': 3}}
 
-    print('Task 1.2:')
-    print('cube1: ' + test_astar(cube1)) 
-    print('cube2: ' + test_astar(cube2)) 
-    print('cube3: ' + test_astar(cube3)) 
-    print('cube4: ' + test_astar(cube4)) 
-    print('\n')
+    #print('Task 1.2:')
+    #print('cube1: ' + test_astar(cube1)) 
+    #print('cube2: ' + test_astar(cube2)) 
+    #print('cube3: ' + test_astar(cube3)) 
+    #print('cube4: ' + test_astar(cube4)) 
+    #print('\n')
 
 
 #TODO Task 1.3: Explain why the heuristic you designed for Task 1.1 is {consistent} 
@@ -323,10 +323,11 @@ def transition(route: List[int]):
         new_routes (List[List[int]]): New routes to be considered
     """
     new_routes = []
-    
-    """ YOUR CODE HERE """
-    
-    """ END YOUR CODE HERE """
+    for i in range(len(route)):
+        for j in range(i+1, len(route)):
+            new_route = copy.deepcopy(route)
+            new_route[i], new_route[j] = new_route[j], new_route[i]
+            new_routes.append(new_route)
 
     return new_routes
 
@@ -366,12 +367,21 @@ def evaluation_func(cities: int, distances: List[Tuple[int]], route: List[int]) 
         h_n (float): the evaluation score
     """
     h_n = 0.0
-    
-    """ YOUR CODE HERE """
-    
-    """ END YOUR CODE HERE """
+    dict = {}
+    for distance in distances:
+        dict[(distance[0], distance[1])] = distance[2]
+    for i in range(0, len(route), 1):
+        if i == len(route) - 1:
+            cur_city, next_city = route[i], route[0]
+        else:
+            cur_city, next_city = route[i], route[i+1]
+        if (cur_city, next_city) in dict:
+            dist = dict[(cur_city, next_city)]
+        else:
+            dist = dict[(next_city, cur_city)]
+        h_n += dist
 
-    return h_n
+    return -h_n
 
 if __name__ == '__main__':
     cities = 4
@@ -409,11 +419,14 @@ def hill_climbing(cities: int, distances: List[Tuple[int]]):
             in the order to be traversed.
     """
 
-    route = []
-    
-    """ YOUR CODE HERE """
-
-    """ END YOUR CODE HERE """
+    route = list(range(cities))
+    cur_max = evaluation_func(cities, distances, route)
+    routes = transition(list(range(cities)))
+    for r in routes:
+        cur = evaluation_func(cities, distances, r)
+        if cur > cur_max:
+            cur_max = cur
+            route = r
     
     return route
 
