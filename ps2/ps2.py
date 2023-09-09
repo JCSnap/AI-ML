@@ -26,7 +26,22 @@ from utils import PriorityQueue
 #   the State class and returns the estimated cost of reaching the goal state from the state given.
 
 # One possible heuristic: sum of the number of tiles that are not in the correct position
-def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
+# EDIT: THIS IS NOT ADMISSIBLE
+# COUNTER EXAMPLE:
+# Goal:
+# 123
+# 456
+# 789
+
+# Current:
+# 372
+# 156
+# 489
+
+# Actions: [{0, "left"}, {0, "up"}]
+# Cost: 2
+# min(rows_diff, cols_diff) = 3
+def heuristic_func2(problem: cube.Cube, state: cube.State) -> float:
     r"""
     Computes the heuristic value of a state
     
@@ -77,7 +92,7 @@ def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
 # Explanation: the nearest B in the goal state is at position (0, 0). The misaligned B is at position (1, 0). Distance is 1. Same reasoning for R and G.
 # total misaligned tiles (RBG of left column so total 3)
 # heuristic = 3/3 = 1
-def heuristic_func2(problem: cube.Cube, state: cube.State) -> float:
+def heuristic_func(problem: cube.Cube, state: cube.State) -> float:
     goals = problem.goal
     shape = goals.shape
     goal_array = np.array(goals.layout).reshape(shape)
