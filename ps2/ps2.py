@@ -323,11 +323,11 @@ def transition(route: List[int]):
         new_routes (List[List[int]]): New routes to be considered
     """
     new_routes = []
-    for i in range(len(route)):
-        for j in range(i+1, len(route)):
-            new_route = copy.deepcopy(route)
-            new_route[i], new_route[j] = new_route[j], new_route[i]
-            new_routes.append(new_route)
+    for _ in range(len(route)):
+        new_route = copy.deepcopy(route)
+        idx1, idx2 = random.sample(range(len(route)), 2)
+        new_route[idx1], new_route[idx2] = new_route[idx2], new_route[idx1]
+        new_routes.append(new_route)
 
     return new_routes
 
@@ -420,6 +420,8 @@ def hill_climbing(cities: int, distances: List[Tuple[int]]):
     """
 
     route = list(range(cities))
+    random.shuffle(route)
+    print(route)
     cur_max = evaluation_func(cities, distances, route)
     routes = transition(list(range(cities)))
     for r in routes:
@@ -484,7 +486,13 @@ def hill_climbing_with_random_restarts(cities: int, distances: List[Tuple[int]],
     """
 
     route = []
-    
+    max_score = float('-infinity')
+    for _ in range(repeats):
+        cur_route = hill_climbing(cities, distances)
+        eval_score = evaluation_func(cities, distances, cur_route)
+        if eval_score > max_score:
+            max_score = eval_score
+            route = cur_route
     """ YOUR CODE HERE """
 
     """ END YOUR CODE HERE """
