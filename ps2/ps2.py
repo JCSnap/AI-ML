@@ -25,6 +25,30 @@ from utils import PriorityQueue
 #TODO Task 1.1: Implement your heuristic function, which takes in an instance of the Cube and
 #   the State class and returns the estimated cost of reaching the goal state from the state given.
 
+# Consider the best case, where the Rubik's square is only 1 move away to the goal state, we would be able to move max(row_diff, col_diff) to their correct position
+# Thus, the number of moves needed is bounded by number of wrong tiles / max(row_diff, col_diff), (this is the case where all the wrong tiles are in a position such that they can be fixed with the min cost)
+# In all cases, the heuristic will always be less than the actual cost 
+def heuristic_func3(problem: cube.Cube, state: cube.State) -> float:
+    goals = problem.goal
+    shape = goals.shape
+    goal_array = np.array(goals.layout).reshape(shape)
+    state_array = np.array(state.layout).reshape(shape)
+    
+    mismatched_tiles = np.sum(state_array != goal_array)
+    
+    row_diff = np.sum(np.any(state_array != goal_array, axis=1))
+    col_diff = np.sum(np.any(state_array != goal_array, axis=0))
+    
+    # To prevent division by zero
+    if max(row_diff, col_diff) == 0:
+        return 0.0
+
+    h_n = mismatched_tiles / max(row_diff, col_diff)
+    return h_n
+
+# Since the cube.Cube and cube.State classes aren't defined in this environment, the function can't be directly tested here.
+# However, you can use this function in your original environment where the classes are defined.
+
 # One possible heuristic: sum of the number of tiles that are not in the correct position
 # EDIT: THIS IS NOT ADMISSIBLE
 # COUNTER EXAMPLE:
