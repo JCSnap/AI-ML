@@ -304,7 +304,28 @@ def test_31():
 # test_31()
 
 def negamax_alpha_beta(board, depth, max_depth, alpha, beta) -> tuple[Score, Move]:
+    if depth == max_depth:
+        return evaluate(board), None
+    moves = generate_valid_moves(board)
+    best_move = None
+    is_black = depth % 2 == 0
+    v = -utils.INF
+    for move in moves:
+        updated_board = utils.state_change(board, move[0], move[1], in_place=False)
+        inverted_board = utils.invert_board(updated_board, in_place=False)
+        board_to_check = updated_board if is_black else inverted_board
+        if utils.is_game_over(board_to_check):
+            ## If current is a terminal white move, we want to invert the score
+            return (evaluate(board_to_check), move) if is_black else (-evaluate(board_to_check), move)
+        next_val = -negamax_alpha_beta(inverted_board, depth + 1, max_depth, alpha, beta)[0]
+        if next_val > v:
+            v = next_val
+            best_move = move
+            alpha = max(alpha, v)
+        if v >= beta:
+            return (v, best_move)
 
+    return (v, best_move)
 
 def test_32():
     board1 = [
