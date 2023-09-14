@@ -361,14 +361,42 @@ def test_32():
     score3, _ = negamax_alpha_beta(board3, 0, 6, -utils.INF, utils.INF)
     assert score3 == -utils.WIN, "white should win in 6"
 
-test_32()
+# test_32()
 
 # Uncomment and implement the function.
 # Note: this will override the provided `evaluate` function.
-
-# def evaluate(board):
-#     # TODO: replace this with your own implementation
-#     raise NotImplementedError
+# 0: 10     
+# 1: 10     -50
+# 2: 20     -40
+# 3: 40     -20
+# 4: 50     -10
+# 5: 50     -10
+def evaluate(board):
+    bcount = 0
+    bpoints = 0
+    wcount = 0
+    wpoints = 0
+    bpoints_constant = [10, 10, 20, 40, 50]
+    wpoints_constant = [0, -50, -40, -20, -10, -10]
+    for r, row in enumerate(board):
+        for tile in row:
+            if tile == 'B':
+                if r == 5:
+                    return utils.WIN
+                else:
+                    bpoints += bpoints_constant[r]
+                bcount += 1
+            elif tile == 'W':
+                if r == 0:
+                    return -utils.WIN
+                else:
+                    wpoints += wpoints_constant[r]
+                wcount += 1
+    if wcount == 0:
+        return utils.WIN
+    if bcount == 0:
+        return -utils.WIN
+    return bpoints + wpoints
 
 def test_41():
     board1 = [
@@ -401,7 +429,7 @@ def test_41():
     ]
     assert evaluate(board3) == utils.WIN
 
-# test_41()
+test_41()
 
 class PlayerAI:
 
