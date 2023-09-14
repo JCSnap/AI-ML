@@ -317,7 +317,7 @@ def negamax_alpha_beta(board, depth, max_depth, alpha, beta) -> tuple[Score, Mov
         if utils.is_game_over(board_to_check):
             ## If current is a terminal white move, we want to invert the score
             return (evaluate(board_to_check), move) if is_black else (-evaluate(board_to_check), move)
-        next_val = -negamax_alpha_beta(inverted_board, depth + 1, max_depth, alpha, beta)[0]
+        next_val = -negamax_alpha_beta(inverted_board, depth + 1, max_depth, -beta, -alpha)[0]
         if next_val > v:
             v = next_val
             best_move = move
