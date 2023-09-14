@@ -112,7 +112,7 @@ def minimax(board, depth, max_depth, is_black: bool) -> tuple[Score, Move]:
         board_to_check = updated_board if is_black else inverted_board
         if utils.is_game_over(board_to_check):
             return evaluate(board_to_check), move
-        next = negamax(inverted_board, depth + 1, max_depth)
+        next = minimax(inverted_board, depth + 1, max_depth)
         if is_black and next[0] > v or not is_black and next[0] < v:
             v = next[0]
             best_move = move
@@ -234,11 +234,38 @@ def test_22():
     print(score3)
     assert score3 == -utils.WIN, "white should win in 4"
 
-test_22()
+# test_22()
 
 def minimax_alpha_beta(board, depth, max_depth, alpha, beta, is_black: bool) -> tuple[Score, Move]:
-    # TODO: Replace this with your own implementation
-    raise NotImplementedError
+    if depth == max_depth:
+        return evaluate(board), None
+    moves = generate_valid_moves(board)
+    best_move = None
+    v = -utils.INF if is_black else utils.INF
+    for move in moves:
+        updated_board = utils.state_change(board, move[0], move[1], in_place=False)
+        inverted_board = utils.invert_board(updated_board, in_place=False)
+        ## We do this because the evaluate function needs the board to be at the perspective of black, even though
+        ## we invert white to black everytime
+        board_to_check = updated_board if is_black else inverted_board
+        if utils.is_game_over(board_to_check):
+            return evaluate(board_to_check), move
+        next = minimax_alpha_beta(inverted_board, depth + 1, max_depth, alpha, beta, not is_black)
+        if is_black:
+            if next[0] > v:
+                v = next[0]
+                best_move = move
+                alpha = max(alpha, v)
+            if v >= beta:
+                return (v, best_move)
+        else:
+            if next[0] < v:
+                v = next[0]
+                best_move = move
+                beta = min(beta, v)
+            if v <= alpha:
+                return (v, best_move)
+    return (v, best_move)
 
 def test_31():
     board1 = [
@@ -277,8 +304,7 @@ def test_31():
 # test_31()
 
 def negamax_alpha_beta(board, depth, max_depth, alpha, beta) -> tuple[Score, Move]:
-    # TODO: Replace this with your own implementation
-    raise NotImplementedError
+
 
 def test_32():
     board1 = [
@@ -314,7 +340,7 @@ def test_32():
     score3, _ = negamax_alpha_beta(board3, 0, 6, -utils.INF, utils.INF)
     assert score3 == -utils.WIN, "white should win in 6"
 
-# test_32()
+test_32()
 
 # Uncomment and implement the function.
 # Note: this will override the provided `evaluate` function.
