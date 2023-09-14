@@ -27,8 +27,18 @@ def generate_valid_moves(board):
     Generates a list (or iterable, if you want to) containing
     all possible moves in a particular position for black.
     '''
-    # TODO: Replace this with your own implementation
-    raise NotImplementedError
+    valid_moves = []
+    for r in range(len(board)):
+        for c in range(len(board[0])):
+            piece = board[r][c]
+            if piece != 'B':
+                continue
+            src = r, c
+            for d in (-1, 0, 1):
+                dst = r + 1, c + d
+                if utils.is_valid_move(board, src, dst):
+                    valid_moves.append((src, dst))
+    return valid_moves
 
 def test_11():
     board1 = [
@@ -64,33 +74,7 @@ def test_11():
 # test_11()
 
 def minimax(board, depth, max_depth, is_black: bool) -> tuple[Score, Move]:
-    '''
-    Finds the best move for the input board state.
-    Note that you are black.
 
-    Parameters
-    ----------
-    board: 2D list of lists. Contains characters 'B', 'W' and '_'
-    representing black pawn, white pawn and empty cell, respectively.
-
-    depth: int, the depth to search for the best move. When this is equal
-    to `max_depth`, you should get the evaluation of the position using
-    the provided heuristic function.
-
-    max_depth: int, the maximum depth for cutoff.
-
-    is_black: bool. True when finding the best move for black, False
-    otherwise.
-
-    Returns
-    -------
-    A tuple (evalutation, ((src_row, src_col), (dst_row, dst_col))):
-    evaluation: the best score that black can achieve after this move.
-    src_row, src_col: position of the pawn to move.
-    dst_row, dst_col: position to move the pawn to.
-    '''
-    # TODO: relace with your own implementation
-    raise NotImplementedError
 
 def test_21():
     board1 = [
@@ -389,3 +373,5 @@ if __name__ == "__main__":
     res = utils.play(PlayerAI(), PlayerNaive(), board)
     # Black wins means your agent wins.
     print(res)
+
+test_21()
