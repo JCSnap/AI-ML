@@ -107,10 +107,12 @@ def minimax(board, depth, max_depth, is_black: bool) -> tuple[Score, Move]:
     for move in moves:
         updated_board = utils.state_change(board, move[0], move[1], in_place=False)
         inverted_board = utils.invert_board(updated_board, in_place=False)
+        ## We do this because the evaluate function needs the board to be at the perspective of black, even though
+        ## we invert white to black everytime
         board_to_check = updated_board if is_black else inverted_board
         if utils.is_game_over(board_to_check):
             return evaluate(board_to_check), move
-        next = minimax(inverted_board, depth + 1, max_depth, not is_black)
+        next = negamax(inverted_board, depth + 1, max_depth)
         if is_black and next[0] > v or not is_black and next[0] < v:
             v = next[0]
             best_move = move
@@ -177,8 +179,25 @@ def negamax(board, depth, max_depth) -> tuple[Score, Move]:
     src_row, src_col: position of the pawn to move.
     dst_row, dst_col: position to move the pawn to.
     '''
-    # TODO: replace with your own implementation
-    raise NotImplementedError
+    if depth == max_depth:
+        return evaluate(board), None
+    moves = generate_valid_moves(board)
+    best_move = None
+    is_black = depth % 2 == 0
+    v = -utils.INF
+    for move in moves:
+        updated_board = utils.state_change(board, move[0], move[1], in_place=False)
+        inverted_board = utils.invert_board(updated_board, in_place=False)
+        board_to_check = updated_board if is_black else inverted_board
+        if utils.is_game_over(board_to_check):
+            ## If current is a terminal white move, we want to invert the score
+            return (evaluate(board_to_check), move) if is_black else (-evaluate(board_to_check), move)
+        next_val = -negamax(inverted_board, depth + 1, max_depth)[0]
+        if next_val > v:
+            v = next_val
+            best_move = move
+
+    return (v, best_move)
 
 def test_22():
     board1 = [
@@ -212,9 +231,10 @@ def test_22():
         list("______"),
     ]
     score3, _ = negamax(board3, 0, 4)
+    print(score3)
     assert score3 == -utils.WIN, "white should win in 4"
 
-# test_22()
+test_22()
 
 def minimax_alpha_beta(board, depth, max_depth, alpha, beta, is_black: bool) -> tuple[Score, Move]:
     # TODO: Replace this with your own implementation
@@ -413,5 +433,3 @@ if __name__ == "__main__":
     res = utils.play(PlayerAI(), PlayerNaive(), board)
     # Black wins means your agent wins.
     print(res)
-
-test_21()
